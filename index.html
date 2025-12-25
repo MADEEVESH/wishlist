@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WishVault — Wishlist & Unfulfilled Desires</title>
+  <meta name="description" content="A simple, private wish list collector. Submissions are stored locally in your browser." />
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,0.06);
+      --panel2:rgba(255,255,255,0.10);
+      --text:rgba(255,255,255,0.92);
+      --muted:rgba(255,255,255,0.70);
+      --stroke:rgba(255,255,255,0.12);
+      --accent:#7c5cff;
+      --accent2:#2dd4bf;
+      --danger:#ff5c7a;
+      --radius:18px;
+      --shadow:0 18px 60px rgba(0,0,0,0.55);
+      --container:1100px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 20% 0%, rgba(124,92,255,0.25), transparent 55%),
+        radial-gradient(1000px 600px at 85% 10%, rgba(45,212,191,0.18), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    a{color:inherit; text-decoration:none}
+    .container{width:min(100% - 32px, var(--container)); margin:0 auto}
+
+    .header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(10px);
+      background: rgba(11,16,32,0.60);
+      border-bottom:1px solid var(--stroke);
+    }
+    .header__inner{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:16px; padding:14px 0;
+    }
+    .brand{display:flex; align-items:center; gap:12px; font-weight:900;}
+    .brand__mark{
+      width:38px; height:38px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(124,92,255,0.95), rgba(45,212,191,0.85));
+      color:#0b1020;
+      box-shadow: 0 10px 30px rgba(124,92,255,0.25);
+    }
+    .brand__text{letter-spacing:0.2px}
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:12px 16px; border-radius:14px;
+      border:1px solid transparent;
+      background: linear-gradient(135deg, rgba(124,92,255,0.95), rgba(45,212,191,0.85));
+      color:#0b1020; font-weight:900;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      cursor:pointer;
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn--ghost{
+      background: rgba(255,255,255,0.05);
+      border-color: var(--stroke);
+      color: var(--text);
+      box-shadow:none;
+    }
+    .btn--danger{
+      background: rgba(255,92,122,0.12);
+      border-color: rgba(255,92,122,0.35);
+      color: var(--text);
+      box-shadow:none;
+    }
+    .btn--sm{padding:10px 12px; border-radius:12px; font-size:14px}
+
+    .hero{padding:58px 0 18px}
+    .hero__grid{display:grid; grid-template-columns:1.2fr 0.8fr; gap:16px; align-items:start}
+    .eyebrow{color:var(--muted); font-weight:900; font-size:13px; margin:0 0 10px; letter-spacing:0.3px}
+    h1{margin:0 0 10px; font-size: clamp(30px, 3.2vw, 48px); line-height:1.08}
+    .subtitle{color:var(--muted); margin:0 0 18px; max-width:70ch}
+
+    .card{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      padding:18px;
+    }
+
+    .section{padding:26px 0 56px}
+    .grid{display:grid; gap:14px}
+    .grid--2{grid-template-columns: repeat(2, minmax(0,1fr))}
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+
+    label{display:grid; gap:8px; font-weight:900; font-size:13px}
+    input, textarea, select{
+      width:100%;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      outline:none;
+      font: inherit;
+    }
+    textarea{resize:vertical; min-height:110px}
+    input::placeholder, textarea::placeholder{color:rgba(255,255,255,0.45)}
+    input:focus, textarea:focus, select:focus{border-color: rgba(124,92,255,0.55)}
+
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .row3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+
+    .kpi{
+      display:grid; gap:10px;
+    }
+    .kpi__item{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      border-radius:14px;
+      padding:12px;
+    }
+    .kpi__label{color:var(--muted); font-weight:900; font-size:12px}
+    .kpi__value{font-weight:900; font-size:18px; margin-top:3px}
+
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin: 10px 0 0;
+    }
+
+    .list{
+      display:grid; gap:12px;
+      margin-top:14px;
+    }
+    .wish{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius);
+      padding:14px;
+    }
+    .wish__top{
+      display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .badge{
+      display:inline-flex;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+    }
+    .wish__title{font-weight:900; margin:0}
+    .wish__meta{color:var(--muted); font-size:13px}
+    .wish__text{margin:10px 0 0; color:var(--text)}
+    .wish__btns{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+
+    .footer{
+      border-top:1px solid var(--stroke);
+      background: rgba(255,255,255,0.02);
+      padding:16px 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .footer__inner{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+
+    @media (max-width: 980px){
+      .hero__grid{grid-template-columns: 1fr}
+    }
+    @media (max-width: 760px){
+      .grid--2{grid-template-columns: 1fr}
+      .row, .row3{grid-template-columns: 1fr}
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <div class="brand">
+        <div class="brand__mark">W</div>
+        <div class="brand__text">WishVault</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn--ghost btn--sm" id="exportBtn" type="button">Export JSON</button>
+        <button class="btn btn--danger btn--sm" id="clearBtn" type="button">Clear All</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero__grid">
+        <div>
+          <p class="eyebrow">Private, simple, no accounts</p>
+          <h1>Write your wishlist and unfulfilled desires.</h1>
+          <p class="subtitle">
+            This is a lightweight collector. On GitHub Pages, submissions are stored in your browser (localStorage),
+            not on a server. If you want shared submissions for everyone, you need an external database.
+          </p>
+        </div>
+
+        <aside class="card">
+          <div class="kpi" aria-label="Stats">
+            <div class="kpi__item">
+              <div class="kpi__label">Total wishes saved</div>
+              <div class="kpi__value" id="kpiTotal">0</div>
+            </div>
+            <div class="kpi__item">
+              <div class="kpi__label">Most common category</div>
+              <div class="kpi__value" id="kpiTopCat">—</div>
+            </div>
+          </div>
+          <p class="muted small" style="margin:12px 0 0">
+            If you need public/global storage, use Supabase/Firebase (Option 3).
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container grid grid--2">
+        <!-- FORM -->
+        <section class="card" aria-label="Submission form">
+          <h2 style="margin:0 0 10px">Submit a wish</h2>
+          <p class="muted" style="margin:0 0 14px">
+            Keep it clear and specific. Vague wishes are easy to ignore.
+          </p>
+
+          <form id="wishForm">
+            <label>
+              Your wish / desire
+              <textarea name="wish" maxlength="500" placeholder="Example: I want to travel alone for a week without responsibilities." required></textarea>
+              <span class="muted small" id="wishCount">0/500</span>
+            </label>
+
+            <div class="row">
+              <label>
+                Category
+                <select name="category" required>
+                  <option value="" selected disabled>Choose…</option>
+                  <option>Career</option>
+                  <option>Money</option>
+                  <option>Health</option>
+                  <option>Relationships</option>
+                  <option>Family</option>
+                  <option>Travel</option>
+                  <option>Skills</option>
+                  <option>Confidence</option>
+                  <option>Freedom</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label>
+                Intensity (1–10)
+                <input name="intensity" type="number" min="1" max="10" value="7" required />
+              </label>
+            </div>
+
+            <div class="row3">
+              <label>
+                Timeframe
+                <select name="timeframe" required>
+                  <option value="" selected disabled>Choose…</option>
+                  <option>Right now</option>
+                  <option>Within 3 months</option>
+                  <option>Within 1 year</option>
+                  <option>Someday</option>
+                </select>
+              </label>
+
+              <label>
+                Name (optional)
+                <input name="name" type="text" maxlength="60" placeholder="Anonymous" />
+              </label>
+
+              <label>
+                Email (optional)
+                <input name="email" type="email" maxlength="120" placeholder="you@example.com" />
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="btn" type="submit">Save wish</button>
+              <button class="btn btn--ghost" type="button" id="demoBtn">Add demo wishes</button>
+            </div>
+
+            <p class="muted small" style="margin:12px 0 0">
+              Note: data is stored on this device only. Clearing browser storage deletes everything.
+            </p>
+          </form>
+        </section>
+
+        <!-- LIST -->
+        <section class="card" aria-label="Saved wishes">
+          <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+            <div>
+              <h2 style="margin:0 0 6px">Saved wishes</h2>
+              <p class="muted" style="margin:0">Filter and review what’s been submitted on this device.</p>
+            </div>
+          </div>
+
+          <div class="toolbar" role="region" aria-label="Filters">
+            <label style="min-width: 220px">
+              Search
+              <input id="searchInput" type="text" placeholder="Search text, category, name…" />
+            </label>
+
+            <label style="min-width: 180px">
+              Category
+              <select id="categoryFilter">
+                <option value="">All</option>
+                <option>Career</option>
+                <option>Money</option>
+                <option>Health</option>
+                <option>Relationships</option>
+                <option>Family</option>
+                <option>Travel</option>
+                <option>Skills</option>
+                <option>Confidence</option>
+                <option>Freedom</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label style="min-width: 160px">
+              Sort
+              <select id="sortSelect">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="intensity_desc">Intensity high → low</option>
+                <option value="intensity_asc">Intensity low → high</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="list" id="wishList" aria-live="polite"></div>
+
+          <p class="muted small" id="emptyState" style="margin:14px 0 0; display:none">
+            No wishes saved yet. Submit one on the left.
+          </p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span id="year"></span> WishVault</span>
+      <span>Static hosting compatible (GitHub Pages)</span>
+    </div>
+  </footer>
+
+  <script>
+    // GitHub Pages note:
+    // - We can READ static JSON files.
+    // - We cannot WRITE to server files.
+    // So we store entries in localStorage.
+
+    const STORAGE_KEY = "wishvault_entries_v1";
+
+    const form = document.getElementById("wishForm");
+    const wishText = form.querySelector('textarea[name="wish"]');
+    const wishCount = document.getElementById("wishCount");
+
+    const wishList = document.getElementById("wishList");
+    const emptyState = document.getElementById("emptyState");
+
+    const searchInput = document.getElementById("searchInput");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const sortSelect = document.getElementById("sortSelect");
+
+    const exportBtn = document.getElementById("exportBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const demoBtn = document.getElementById("demoBtn");
+
+    const kpiTotal = document.getElementById("kpiTotal");
+    const kpiTopCat = document.getElementById("kpiTopCat");
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    function loadEntries(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function saveEntries(entries){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function uid(){
+      return "w_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+    }
+
+    function sanitize(str){
+      return String(str ?? "").replace(/[<>]/g, "");
+    }
+
+    function formatDate(ts){
+      const d = new Date(ts);
+      return d.toLocaleString();
+    }
+
+    function computeTopCategory(entries){
+      if (!entries.length) return "—";
+      const counts = {};
+      for (const e of entries){
+        counts[e.category] = (counts[e.category] || 0) + 1;
+      }
+      let top = null, topCount = 0;
+      for (const [cat, c] of Object.entries(counts)){
+        if (c > topCount){
+          top = cat; topCount = c;
+        }
+      }
+      return top || "—";
+    }
+
+    function applyFilters(entries){
+      const q = searchInput.value.trim().toLowerCase();
+      const cat = categoryFilter.value;
+
+      let out = entries.slice();
+
+      if (cat){
+        out = out.filter(e => e.category === cat);
+      }
+
+      if (q){
+        out = out.filter(e => {
+          const blob = (
+            e.wish + " " + e.category + " " + (e.name || "") + " " + (e.timeframe || "")
+          ).toLowerCase();
+          return blob.includes(q);
+        });
+      }
+
+      switch (sortSelect.value){
+        case "oldest":
+          out.sort((a,b) => a.created_at - b.created_at);
+          break;
+        case "intensity_desc":
+          out.sort((a,b) => (b.intensity - a.intensity) || (b.created_at - a.created_at));
+          break;
+        case "intensity_asc":
+          out.sort((a,b) => (a.intensity - b.intensity) || (b.created_at - a.created_at));
+          break;
+        default: // newest
+          out.sort((a,b) => b.created_at - a.created_at);
+      }
+
+      return out;
+    }
+
+    function render(){
+      const entries = loadEntries();
+      const filtered = applyFilters(entries);
+
+      // KPI
+      kpiTotal.textContent = String(entries.length);
+      kpiTopCat.textContent = computeTopCategory(entries);
+
+      wishList.innerHTML = "";
+
+      if (!filtered.length){
+        emptyState.style.display = entries.length ? "block" : "block";
+        emptyState.textContent = entries.length
+          ? "No matches for your filters. Try clearing search or changing category."
+          : "No wishes saved yet. Submit one on the left.";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      for (const e of filtered){
+        const el = document.createElement("article");
+        el.className = "wish";
+        el.innerHTML = `
+          <div class="wish__top">
+            <div>
+              <p class="wish__title">${sanitize(e.name || "Anonymous")} · <span class="muted">${sanitize(e.timeframe)}</span></p>
+              <div class="wish__meta">${formatDate(e.created_at)} · Intensity ${Number(e.intensity)}/10</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="badge">${sanitize(e.category)}</span>
+              <span class="badge">#${sanitize(e.id.slice(-6))}</span>
+            </div>
+          </div>
+          <p class="wish__text">${sanitize(e.wish)}</p>
+          <div class="wish__btns">
+            <button class="btn btn--ghost btn--sm" data-action="copy" data-id="${e.id}">Copy</button>
+            <button class="btn btn--danger btn--sm" data-action="delete" data-id="${e.id}">Delete</button>
+          </div>
+        `;
+        wishList.appendChild(el);
+      }
+    }
+
+    // Character counter
+    wishText.addEventListener("input", () => {
+      wishCount.textContent = `${wishText.value.length}/500`;
+    });
+
+    // Submit
+    form.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+
+      const data = new FormData(form);
+      const wish = String(data.get("wish") || "").trim();
+      const category = String(data.get("category") || "").trim();
+      const timeframe = String(data.get("timeframe") || "").trim();
+      const intensity = Number(data.get("intensity") || 7);
+      const name = String(data.get("name") || "").trim();
+      const email = String(data.get("email") || "").trim();
+
+      // Minimal validation
+      if (!wish || wish.length < 5){
+        alert("Write a real wish (at least 5 characters).");
+        return;
+      }
+      if (!category || !timeframe){
+        alert("Pick a category and timeframe.");
+        return;
+      }
+      if (!Number.isFinite(intensity) || intensity < 1 || intensity > 10){
+        alert("Intensity must be between 1 and 10.");
+        return;
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        alert("Email looks invalid. Leave it blank if you want privacy.");
+        return;
+      }
+
+      const entries = loadEntries();
+      entries.push({
+        id: uid(),
+        wish,
+        category,
+        timeframe,
+        intensity,
+        name: name || "Anonymous",
+        email: email || "",
+        created_at: Date.now()
+      });
+
+      saveEntries(entries);
+      form.reset();
+      wishCount.textContent = "0/500";
+      render();
+    });
+
+    // List actions (copy/delete)
+    wishList.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+
+      const id = btn.getAttribute("data-id");
+      const action = btn.getAttribute("data-action");
+      if (!id || !action) return;
+
+      const entries = loadEntries();
+      const idx = entries.findIndex(e => e.id === id);
+      if (idx === -1) return;
+
+      if (action === "delete"){
+        const ok = confirm("Delete this wish?");
+        if (!ok) return;
+        entries.splice(idx, 1);
+        saveEntries(entries);
+        render();
+        return;
+      }
+
+      if (action === "copy"){
+        const text = entries[idx].wish;
+        try{
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copied";
+          setTimeout(() => btn.textContent = "Copy", 900);
+        }catch{
+          alert("Clipboard blocked. Manually select and copy the text.");
+        }
+      }
+    });
+
+    // Filters
+    [searchInput, categoryFilter, sortSelect].forEach(el => el.addEventListener("input", render));
+
+    // Export
+    exportBtn.addEventListener("click", () => {
+      const entries = loadEntries();
+      const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wishvault-export.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    });
+
+    // Clear
+    clearBtn.addEventListener("click", () => {
+      const ok = confirm("This will delete all saved wishes on this device. Continue?");
+      if (!ok) return;
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    });
+
+    // Demo
+    demoBtn.addEventListener("click", () => {
+      const entries = loadEntries();
+      const now = Date.now();
+      const demos = [
+        { wish: "I want a stable remote tech job that pays well.", category: "Career", timeframe: "Within 1 year", intensity: 9, name: "Anonymous", email: "", created_at: now - 60000 },
+        { wish: "I want to travel alone and feel free from responsibilities.", category: "Travel", timeframe: "Someday", intensity: 8, name: "A.", email: "", created_at: now - 120000 },
+        { wish: "I want to build confidence and stop overthinking.", category: "Confidence", timeframe: "Within 3 months", intensity: 7, name: "Anonymous", email: "", created_at: now - 240000 },
+      ];
+      for (const d of demos){
+        entries.push({ id: uid(), ...d });
+      }
+      saveEntries(entries);
+      render();
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
