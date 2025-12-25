@@ -10,11 +10,7 @@ function clean($s) {
   return $s;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-  http_response_code(405);
-  echo "Method not allowed.";
-  exit;
-}
+
 
 $wish = clean($_POST['wish'] ?? '');
 $category = clean($_POST['category'] ?? '');
@@ -57,12 +53,9 @@ $entry = [
 ];
 
 // Ensure data folder exists
-$dataDir = __DIR__ . '/data';
-if (!is_dir($dataDir)) {
-  mkdir($dataDir, 0755, true);
-}
 
-$file = $dataDir . '/wishes.json';
+
+$file = '/wishes.json';
 
 // Load existing JSON safely
 $all = [];
